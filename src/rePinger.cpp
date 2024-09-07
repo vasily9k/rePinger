@@ -51,29 +51,6 @@ static const uint8_t PING_STOP  = BIT1;
 
 #define PING_TIME_DIFF_MS(_end, _start) ((uint32_t)(((_end).tv_sec - (_start).tv_sec) * 1000 + ((_end).tv_usec - (_start).tv_usec) / 1000))
 
-typedef struct {
-    const char* host_name;
-    ip_addr_t host_addr;
-    TickType_t host_resolved;
-    int sock;
-    struct sockaddr_storage target_addr;
-    struct icmp_echo_hdr *packet_hdr;
-    uint32_t icmp_pkt_size;
-    uint32_t transmitted;
-    uint32_t received;
-    uint32_t elapsed_time_ms;
-    uint32_t total_time_ms;
-    uint32_t total_duration_ms;
-    float total_loss;
-    uint8_t tos;
-    uint8_t ttl;
-    ping_state_t total_state;
-    uint32_t limit_unavailable;
-    uint32_t count_unavailable;
-    time_t time_unavailable;
-    bool notify_unavailable; 
-} pinger_data_t;
-
 TaskHandle_t _pingTask;
 static uint32_t _pingFlags = 0;
 
@@ -252,7 +229,7 @@ static void pingerFreeSession(pinger_data_t *ep)
   }
 }
 
-static esp_err_t pingerInitSession(pinger_data_t *ep, const char* hostname, uint32_t hostid, uint32_t limit_unavailable)
+esp_err_t pingerInitSession(pinger_data_t *ep, const char* hostname, uint32_t hostid, uint32_t limit_unavailable)
 {
   esp_err_t ret = ESP_OK;
   PING_CHECK(ep, "Ping data can't be null", err, ESP_ERR_INVALID_ARG);
@@ -439,7 +416,7 @@ static void pingerCopyHostData(pinger_data_t *ep, ping_host_data_t* host_data)
   host_data->state = ep->total_state;
 }
 
-static ping_state_t pingerCheckHostEx(pinger_data_t *ep)
+ping_state_t pingerCheckHostEx(pinger_data_t *ep)
 {
   #if CONFIG_PING_SHOW_INTERMEDIATE
   rlog_d(logTAG, "Ping host [ %s ]...", ep->host_name);
@@ -488,7 +465,7 @@ static ping_state_t pingerCheckHostEx(pinger_data_t *ep)
     #if CONFIG_PING_SHOW_INTERMEDIATE
     if (recv_ret >= 0) {
       rlog_d(logTAG, "Received of %d bytes from [%s : %s]: icmp_seq = %d, ttl = %d, time = %d ms",
-        ep->datasize, ep->host_name, ipaddr_ntoa(&ep->host_addr), ep->packet_hdr->seqno, ep->ttl, ep->elapsed_time_ms);
+        ep->icmp_pkt_size, ep->host_name, ipaddr_ntoa(&ep->host_addr), ep->packet_hdr->seqno, ep->ttl, ep->elapsed_time_ms);
     } else {
       rlog_w(logTAG, "Packet loss for [%s : %s]: icmp_seq = %d", 
         ep->host_name, ipaddr_ntoa(&ep->host_addr), ep->packet_hdr->seqno);
