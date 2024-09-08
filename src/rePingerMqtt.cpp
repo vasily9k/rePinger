@@ -6,7 +6,9 @@
 #include "rePingerMqtt.h"
 #include "rStrings.h"
 #include "reEsp32.h"
+#ifndef CONFIG_MQTT1_OFF
 #include "reMqtt.h"
+#endif 
 #include "reStates.h"
 
 #if CONFIG_MQTT_PINGER_ENABLE
